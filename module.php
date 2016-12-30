@@ -101,7 +101,7 @@ class DropboxFilestorageModule extends AApiModule
 
 		if ($oOAuthAccount instanceof COAuthAccount && 
 				$oOAuthAccount->Type === self::$sService &&
-					$oOAuthAccount->issetScope('storage'))
+					$this->issetScope('storage') && $oOAuthAccount->issetScope('storage'))
 		{		
 			$mResult[] = [
 				'Type' => self::$sService, 
