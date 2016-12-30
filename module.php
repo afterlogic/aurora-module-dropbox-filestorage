@@ -71,6 +71,20 @@ class DropboxFilestorageModule extends AApiModule
 	 */
 	protected function getClient()
 	{
+		
+		$oDropboxModule = \CApi::GetModule('Dropbox');
+		if ($oDropboxModule instanceof \AApiModule)
+		{
+			if (!$oDropboxModule->getConfig('EnableModule', false))
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}		
+		
 		if ($this->oClient === null)
 		{
 			\CApi::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
@@ -95,6 +109,18 @@ class DropboxFilestorageModule extends AApiModule
 	public function onAfterGetStorages($aArgs, &$mResult)
 	{
 		\CApi::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
+		
+		$bEnableDropboxModule = false;
+		$oDropboxModule = \CApi::GetModule('Dropbox');
+		if ($oDropboxModule instanceof \AApiModule)
+		{
+			$bEnableDropboxModule = $oDropboxModule->getConfig('EnableModule', false);
+		}
+		else
+		{
+			$bEnableDropboxModule = false;
+		}
+		
 		
 		$oOAuthIntegratorWebclientModule = \CApi::GetModuleDecorator('OAuthIntegratorWebclient');
 		$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sService);
