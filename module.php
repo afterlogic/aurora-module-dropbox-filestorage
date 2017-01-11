@@ -75,7 +75,7 @@ class DropboxFilestorageModule extends AApiModule
 		$oDropboxModule = \CApi::GetModule('Dropbox');
 		if ($oDropboxModule instanceof \AApiModule)
 		{
-			if (!$oDropboxModule->getConfig('EnableModule', false))
+			if (!$oDropboxModule->getConfig('EnableModule', false) || !$this->issetScope('storage'))
 			{
 				return false;
 			}
