@@ -27,10 +27,6 @@ class DropboxFilestorageModule extends AApiModule
 		'DropboxAuthWebclient'
 	);
 	
-	protected $aSettingsMap = array(
-		'Scopes' => array('storage', 'string')
-	);
-	
 	protected function issetScope($sScope)
 	{
 		return in_array($sScope, explode(' ', $this->getConfig('Scopes')));
