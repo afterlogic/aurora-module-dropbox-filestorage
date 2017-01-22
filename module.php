@@ -504,6 +504,8 @@ class DropboxFilestorageModule extends AApiModule
 				if (isset($aMetadata['path']) && $aMetadata['is_dir'])
 				{
 					$oItem->MainAction = 'list';
+					$oItem->UnshiftAction('list');
+
 					$oItem->Thumb = true;
 					$oItem->ThumbnailLink = \MailSo\Base\Http::SingletonInstance()->GetFullUrl() . 'modules/' . $this->GetName() . '/images/dropbox.png';
 				}
