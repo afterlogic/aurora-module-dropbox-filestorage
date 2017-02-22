@@ -18,7 +18,9 @@
  * @package Modules
  */
 
-class DropboxFilestorageModule extends AApiModule
+namespace Aurora\Modules;
+
+class DropboxFilestorageModule extends \AApiModule
 {
 	protected static $sService = 'dropbox';
 	protected $oClient = null;
@@ -121,7 +123,7 @@ class DropboxFilestorageModule extends AApiModule
 		$oOAuthIntegratorWebclientModule = \CApi::GetModuleDecorator('OAuthIntegratorWebclient');
 		$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sService);
 
-		if ($oOAuthAccount instanceof COAuthAccount && 
+		if ($oOAuthAccount instanceof \COAuthAccount && 
 				$oOAuthAccount->Type === self::$sService &&
 					$this->issetScope('storage') && $oOAuthAccount->issetScope('storage'))
 		{		
