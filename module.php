@@ -20,7 +20,7 @@
 
 namespace Aurora\Modules;
 
-class DropboxFilestorageModule extends \AApiModule
+class DropboxFilestorageModule extends \Aurora\System\AbstractModule
 {
 	protected static $sService = 'dropbox';
 	protected $oClient = null;
@@ -70,8 +70,8 @@ class DropboxFilestorageModule extends \AApiModule
 	protected function getClient()
 	{
 		
-		$oDropboxModule = \CApi::GetModule('Dropbox');
-		if ($oDropboxModule instanceof \AApiModule)
+		$oDropboxModule = \Aurora\System\Api::GetModule('Dropbox');
+		if ($oDropboxModule instanceof \Aurora\System\AbstractModule)
 		{
 			if (!$oDropboxModule->getConfig('EnableModule', false) || !$this->issetScope('storage'))
 			{
@@ -85,9 +85,9 @@ class DropboxFilestorageModule extends \AApiModule
 		
 		if ($this->oClient === null)
 		{
-			\CApi::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
+			\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
 
-			$oOAuthIntegratorWebclientModule = \CApi::GetModuleDecorator('OAuthIntegratorWebclient');
+			$oOAuthIntegratorWebclientModule = \Aurora\System\Api::GetModuleDecorator('OAuthIntegratorWebclient');
 			$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sService);
 			if ($oOAuthAccount)
 			{
@@ -106,11 +106,11 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	public function onAfterGetStorages($aArgs, &$mResult)
 	{
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
 		
 		$bEnableDropboxModule = false;
-		$oDropboxModule = \CApi::GetModule('Dropbox');
-		if ($oDropboxModule instanceof \AApiModule)
+		$oDropboxModule = \Aurora\System\Api::GetModule('Dropbox');
+		if ($oDropboxModule instanceof \Aurora\System\AbstractModule)
 		{
 			$bEnableDropboxModule = $oDropboxModule->getConfig('EnableModule', false);
 		}
@@ -120,7 +120,7 @@ class DropboxFilestorageModule extends \AApiModule
 		}
 		
 		
-		$oOAuthIntegratorWebclientModule = \CApi::GetModuleDecorator('OAuthIntegratorWebclient');
+		$oOAuthIntegratorWebclientModule = \Aurora\System\Api::GetModuleDecorator('OAuthIntegratorWebclient');
 		$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sService);
 
 		if ($oOAuthAccount instanceof \COAuthAccount && 
@@ -169,7 +169,7 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	protected function populateFileInfo($aData)
 	{
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
 		
 		$mResult = false;
 		if ($aData && is_array($aData))
@@ -242,7 +242,7 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	public function onAfterGetFiles($aArgs, &$mResult)
 	{
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
 		
 		if ($aArgs['Type'] === self::$sService)
 		{
@@ -282,7 +282,7 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	public function onAfterCreateFolder($aArgs, &$mResult)
 	{
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
 		
 		if ($aArgs['Type'] === self::$sService)
 		{
@@ -307,7 +307,7 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	public function onCreateFile($aArgs, &$Result)
 	{
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
 		
 		if ($aArgs['Type'] === self::$sService)
 		{
@@ -349,7 +349,7 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	public function onAfterDelete($aArgs, &$mResult)
 	{
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
 		
 		if ($aArgs['Type'] === self::$sService)
 		{
@@ -375,7 +375,7 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	public function onAfterRename($aArgs, &$mResult)
 	{
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
 		
 		if ($aArgs['Type'] === self::$sService)
 		{
@@ -401,7 +401,7 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	public function onAfterMove($aArgs, &$mResult)
 	{
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
 		
 		if ($aArgs['FromType'] === self::$sService)
 		{
@@ -430,7 +430,7 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	public function onAfterCopy($aArgs, &$mResult)
 	{
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::NormalUser);
 		
 		if ($aArgs['FromType'] === self::$sService)
 		{
@@ -478,7 +478,7 @@ class DropboxFilestorageModule extends \AApiModule
 	{
 		$mResult = false;
 		
-		\CApi::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\EUserRole::Anonymous);
 		
 		$mFileInfo = $this->_getFileInfo($aArgs['Path'], $aArgs['Name']);
 		if ($mFileInfo)
@@ -565,7 +565,7 @@ class DropboxFilestorageModule extends \AApiModule
 				'IsThumb' => false
 			);
 			$mResult = false;
-			\CApi::GetModuleManager()->broadcastEvent(
+			\Aurora\System\Api::GetModuleManager()->broadcastEvent(
 				'Files',
 				'GetFile', 
 				$aArgs,
@@ -573,7 +573,7 @@ class DropboxFilestorageModule extends \AApiModule
 			);	
 			if (is_resource($mResult))
 			{
-				$aUrlFileInfo = \api_Utils::parseIniString(stream_get_contents($mResult));
+				$aUrlFileInfo = \Aurora\System\Utils::parseIniString(stream_get_contents($mResult));
 				if ($aUrlFileInfo && isset($aUrlFileInfo['URL']))
 				{
 					if (false !== strpos($aUrlFileInfo['URL'], 'dl.dropboxusercontent.com') || 
@@ -601,7 +601,7 @@ class DropboxFilestorageModule extends \AApiModule
 	 */
 	public function onGetSettings($aArgs, &$mResult)
 	{
-		$oUser = \CApi::getAuthenticatedUser();
+		$oUser = \Aurora\System\Api::getAuthenticatedUser();
 		
 		if (!empty($oUser))
 		{
