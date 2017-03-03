@@ -20,7 +20,7 @@
 
 namespace Aurora\Modules;
 
-class DropboxFilestorageModule extends \Aurora\System\AbstractModule
+class DropboxFilestorageModule extends \Aurora\System\Module\AbstractModule
 {
 	protected static $sService = 'dropbox';
 	protected $oClient = null;
@@ -71,7 +71,7 @@ class DropboxFilestorageModule extends \Aurora\System\AbstractModule
 	{
 		
 		$oDropboxModule = \Aurora\System\Api::GetModule('Dropbox');
-		if ($oDropboxModule instanceof \Aurora\System\AbstractModule)
+		if ($oDropboxModule instanceof \Aurora\System\Module\AbstractModule)
 		{
 			if (!$oDropboxModule->getConfig('EnableModule', false) || !$this->issetScope('storage'))
 			{
@@ -110,7 +110,7 @@ class DropboxFilestorageModule extends \Aurora\System\AbstractModule
 		
 		$bEnableDropboxModule = false;
 		$oDropboxModule = \Aurora\System\Api::GetModule('Dropbox');
-		if ($oDropboxModule instanceof \Aurora\System\AbstractModule)
+		if ($oDropboxModule instanceof \Aurora\System\Module\AbstractModule)
 		{
 			$bEnableDropboxModule = $oDropboxModule->getConfig('EnableModule', false);
 		}
