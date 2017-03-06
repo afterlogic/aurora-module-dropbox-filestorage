@@ -18,9 +18,9 @@
  * @package Modules
  */
 
-namespace Aurora\Modules;
+namespace Aurora\Modules\DropboxFilestorage;
 
-class DropboxFilestorageModule extends \Aurora\System\Module\AbstractModule
+class Module extends \Aurora\System\Module\AbstractModule
 {
 	protected static $sService = 'dropbox';
 	protected $oClient = null;
