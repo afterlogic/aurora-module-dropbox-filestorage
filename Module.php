@@ -505,8 +505,9 @@ class Module extends \Aurora\System\Module\AbstractModule
 				$aMetadata = $this->getMetadataLink($oItem->LinkUrl);
 				if (isset($aMetadata['path']) && $aMetadata['is_dir'])
 				{
-					$oItem->MainAction = 'list';
-					$oItem->UnshiftAction('list');
+					$oItem->UnshiftAction(array(
+						'list' => array()
+					));
 
 					$oItem->Thumb = true;
 					$oItem->ThumbnailLink = \MailSo\Base\Http::SingletonInstance()->GetFullUrl() . 'modules/' . $this->GetName() . '/images/dropbox.png';
