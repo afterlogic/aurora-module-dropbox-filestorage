@@ -503,7 +503,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					));
 
 					$oItem->Thumb = true;
-					$oItem->ThumbnailLink = \MailSo\Base\Http::SingletonInstance()->GetFullUrl() . 'modules/' . $this->GetName() . '/images/dropbox.png';
+					$oItem->ThumbnailUrl = \MailSo\Base\Http::SingletonInstance()->GetFullUrl() . 'modules/' . $this->GetName() . '/images/dropbox.png';
 				}
 				$oItem->LinkType = 'dropbox';
 				return true;
