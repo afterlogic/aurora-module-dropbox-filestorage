@@ -80,7 +80,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 		{
 			\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
 
-			$oOAuthIntegratorWebclientModule = Module::Decorator();
+			$oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
 			$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sService);
 			if ($oOAuthAccount)
 			{
