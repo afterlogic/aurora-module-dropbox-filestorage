@@ -158,7 +158,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 * @param string $sType Service type.
 	 * @param \Dropbox\Client $oClient DropBox client.
 	 * @param array $aData Array contains information about file.
-	 * @return \CFileStorageItem|false
+	 * @return \Aurora\Modules\Files\Classes\FileItem|false
 	 */
 	protected function populateFileInfo($aData)
 	{
@@ -169,7 +169,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 		{
 			$sPath = ltrim($this->getDirName($aData['path']), '/');
 			$oClient = $this->getClient();
-			$mResult /*@var $mResult \CFileStorageItem */ = new  \CFileStorageItem();
+			$mResult /*@var $mResult \Aurora\Modules\Files\Classes\FileItem */ = new  \Aurora\Modules\Files\Classes\FileItem();
 //			$mResult->IsExternal = true;
 			$mResult->TypeStr = self::$sService;
 			$mResult->IsFolder = $aData['is_dir'];
@@ -257,7 +257,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 
 				foreach($aItems as $aChild) 
 				{
-					$oItem /*@var $oItem \CFileStorageItem */ = $this->populateFileInfo($aChild);
+					$oItem /*@var $oItem \Aurora\Modules\Files\Classes\FileItem */ = $this->populateFileInfo($aChild);
 					if ($oItem)
 					{
 						$mResult['Items'][] = $oItem;
