@@ -209,6 +209,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 //			$mResult->LastModified = date_timestamp_get($oClient->parseDateTime($aData['modified']));
 //			$mResult->Shared = isset($aData['shared']) ? $aData['shared'] : false;
 			$mResult->FullPath = $mResult->Name !== '' ? $mResult->Path . '/' . $mResult->Name : $mResult->Path ;
+			$mResult->ContentType = \Aurora\System\Utils::MimeContentType($mResult->Name);
 			
 			$mResult->Thumb = $this->hasThumb($mResult->Name);
 
@@ -367,27 +368,21 @@ class Module extends \Aurora\System\Module\AbstractModule
 			{
 				$mResult = false;
 
-				$Path = '/'.ltrim($aArgs['Path'], '/').'/'.$aArgs['Name'];
-				if (is_resource($aArgs['Data']))
+				$Path = $aArgs['Path'].'/'.$aArgs['Name'];
+				$rData = $aArgs['Data'];
+				if (!is_resource($aArgs['Data']))
 				{
-					if ($oClient->uploadFile(
-						$Path, 
-						\Dropbox\WriteMode::add(), 
-						$aArgs['Data']))
-					{
-						$mResult = true;
-					}
+					$rData = fopen('php://memory','r+');
+					fwrite($rData, $aArgs['Data']);
+					rewind($rData);					
 				}
-				else
+				$oDropboxFile = \Kunnu\Dropbox\DropboxFile::createByStream($aArgs['Name'], $rData);
+				if ($oClient->upload($oDropboxFile,	$Path))
 				{
-					if ($oClient->uploadFileFromString(
-						$Path, 
-						\Dropbox\WriteMode::add(), 
-						$aArgs['Data']))
-					{
-						$mResult = true;
-					}
+					$mResult = true;
 				}
+				
+				return true;
 			}
 		}
 	}	
@@ -572,18 +567,17 @@ class Module extends \Aurora\System\Module\AbstractModule
 	public function getMetadataLink($sLink)
 	{
 		$oClient = $this->getClient();
-        $response = $oClient->doGet(
-			\Dropbox\Host::getDefault()->getApi(),
-            '1/metadata/link', 
+        $response = $oClient->postToAPI(
+            '/2/sharing/get_shared_link_metadata', 
 			array(
-				'link' => $sLink
+				'url' => $sLink
 			)
 		);
 
-        if ($response->statusCode === 404) return null;
-        if ($response->statusCode !== 200) return null;
+        if ($response->getHttpStatusCode() === 404) return null;
+        if ($response->getHttpStatusCode() !== 200) return null;
 
-        $metadata = \Dropbox\RequestUtil::parseResponseJson($response->body);
+        $metadata = $response->getDecodedBody();
         if (array_key_exists("is_deleted", $metadata) && $metadata["is_deleted"]) return null;
         return $metadata;
 	}
