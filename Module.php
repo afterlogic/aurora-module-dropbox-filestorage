@@ -206,7 +206,10 @@ class Module extends \Aurora\System\Module\AbstractModule
 			$mResult->Path = !empty($sPath) ? '/'.$sPath : $sPath;
 			$mResult->Size = !$mResult->IsFolder ? $aData->getSize() : 0;
 //			$bResult->Owner = $oSocial->Name;
-//			$mResult->LastModified = date_timestamp_get($oClient->parseDateTime($aData['modified']));
+			if (!$mResult->IsFolder)
+			{
+				$mResult->LastModified =  date("U",strtotime($aData->getServerModified()));
+			}
 //			$mResult->Shared = isset($aData['shared']) ? $aData['shared'] : false;
 			$mResult->FullPath = $mResult->Name !== '' ? $mResult->Path . '/' . $mResult->Name : $mResult->Path ;
 			$mResult->ContentType = \Aurora\System\Utils::MimeContentType($mResult->Name);
