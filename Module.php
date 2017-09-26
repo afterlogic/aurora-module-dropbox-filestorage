@@ -15,7 +15,7 @@ namespace Aurora\Modules\DropboxFilestorage;
  */
 class Module extends \Aurora\System\Module\AbstractModule
 {
-	protected static $sService = 'dropbox';
+	protected static $sStorageType = 'dropbox';
 	protected $oClient = null;
 	protected $aRequireModules = array(
 		'OAuthIntegratorWebclient', 
@@ -81,7 +81,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 			\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
 
 			$oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
-			$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sService);
+			$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
 			if ($oOAuthAccount)
 			{
 				$oDropboxApp = new \Kunnu\Dropbox\DropboxApp(
@@ -119,14 +119,14 @@ class Module extends \Aurora\System\Module\AbstractModule
 		
 		
 		$oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
-		$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sService);
+		$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
 
 		if ($oOAuthAccount instanceof \Aurora\Modules\OAuthIntegratorWebclient\Classes\Account && 
-				$oOAuthAccount->Type === self::$sService &&
+				$oOAuthAccount->Type === self::$sStorageType &&
 					$this->issetScope('storage') && $oOAuthAccount->issetScope('storage'))
 		{		
 			$mResult[] = [
-				'Type' => self::$sService, 
+				'Type' => self::$sStorageType, 
 				'IsExternal' => true,
 				'DisplayName' => 'Dropbox'
 			];
@@ -199,7 +199,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 			
 			$mResult /*@var $mResult \Aurora\Modules\Files\Classes\FileItem */ = new  \Aurora\Modules\Files\Classes\FileItem();
 			$mResult->IsExternal = true;
-			$mResult->TypeStr = self::$sService;
+			$mResult->TypeStr = self::$sStorageType;
 			$mResult->IsFolder = ($aData instanceof \Kunnu\Dropbox\Models\FolderMetadata);
 			$mResult->Id = $aData->getName();
 			$mResult->Name = $mResult->Id;
@@ -252,7 +252,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 */
 	public function onGetFile($aArgs, &$mResult)
 	{
-		if ($aArgs['Type'] === self::$sService)
+		if ($aArgs['Type'] === self::$sStorageType)
 		{
 			$oClient = $this->getClient();
 			if ($oClient)
@@ -291,7 +291,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
 		
-		if ($aArgs['Type'] === self::$sService)
+		if ($aArgs['Type'] === self::$sStorageType)
 		{
 			$mResult['Items'] = array();
 			$oClient = $this->getClient();
@@ -338,7 +338,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 		
-		if ($aArgs['Type'] === self::$sService)
+		if ($aArgs['Type'] === self::$sStorageType)
 		{
 			$oClient = $this->getClient();
 			if ($oClient)
@@ -364,7 +364,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 		
-		if ($aArgs['Type'] === self::$sService)
+		if ($aArgs['Type'] === self::$sStorageType)
 		{
 			$oClient = $this->getClient();
 			if ($oClient)
@@ -400,7 +400,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 		
-		if ($aArgs['Type'] === self::$sService)
+		if ($aArgs['Type'] === self::$sStorageType)
 		{
 			$oClient = $this->getClient();
 			if ($oClient)
@@ -426,7 +426,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 		
-		if ($aArgs['Type'] === self::$sService)
+		if ($aArgs['Type'] === self::$sStorageType)
 		{
 			$oClient = $this->getClient();
 			if ($oClient)
@@ -452,7 +452,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 		
-		if ($aArgs['FromType'] === self::$sService)
+		if ($aArgs['FromType'] === self::$sStorageType)
 		{
 			$oClient = $this->getClient();
 			if ($oClient)
@@ -481,7 +481,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 		
-		if ($aArgs['FromType'] === self::$sService)
+		if ($aArgs['FromType'] === self::$sStorageType)
 		{
 			$oClient = $this->getClient();
 			if ($oClient)
