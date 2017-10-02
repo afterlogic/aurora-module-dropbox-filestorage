@@ -245,7 +245,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 * @ignore
 	 * @param int $iUserId Identifier of the authenticated user.
 	 * @param string $sType Service type.
-	 * @param string $sPath File path.
+	 * @param string $sFullPath File path.
 	 * @param string $sName File name.
 	 * @param boolean $bThumb **true** if thumbnail is expected.
 	 * @param mixed $mResult
@@ -257,9 +257,10 @@ class Module extends \Aurora\System\Module\AbstractModule
 			$oClient = $this->getClient();
 			if ($oClient)
 			{
-				if (!isset($aArgs['Thumb']))
+				$sFullPath = $aArgs['Path'] . '/'  .  ltrim($aArgs['Name'], '/');
+				if (!isset($aArgs['IsThumb']))
 				{
-					$mDownloadResult = $oClient->download($aArgs['Name']);
+					$mDownloadResult = $oClient->download($sFullPath);
 					if ($mDownloadResult)
 					{
 						$mResult = \fopen('php://memory','r+');
@@ -269,7 +270,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 				}
 				else
 				{
-					$oThumbnail = $oClient->getThumbnail($aArgs['Name'], 'medium', 'png');
+					$oThumbnail = $oClient->getThumbnail($sFullPath, 'medium', 'png');
 					if ($oThumbnail)
 					{
 						$mResult = \fopen('php://memory','r+');
@@ -278,6 +279,8 @@ class Module extends \Aurora\System\Module\AbstractModule
 					}
 				}
 			}
+			
+			return true;
 		}
 	}	
 	
@@ -325,6 +328,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					}
 				}				
 			}
+			return true;
 		}
 	}	
 
@@ -351,6 +355,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
+			return true;
 		}
 	}	
 
@@ -413,6 +418,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
+			return true;
 		}
 	}	
 
@@ -439,6 +445,8 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
+			
+			return true;
 		}
 	}	
 
@@ -468,6 +476,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
+			return true;
 		}
 	}	
 
@@ -497,6 +506,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
+			return true;
 		}
 	}		
 	
@@ -523,19 +533,19 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 * @param boolean $mResult
 	 * @param boolean $bBreak
 	 */
-	public function onAfterGetFileInfo($aArgs)
+	public function onAfterGetFileInfo($aArgs, &$mResult)
 	{
-		$mResult = false;
-		
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
 		
-		$mFileInfo = $this->_getFileInfo($aArgs['Path'], $aArgs['Name']);
-		if ($mFileInfo)
+		if (self::$sStorageType === $aArgs['Type'])
 		{
-			$mResult = $this->PopulateFileInfo($mFileInfo);
-		}
-		
-		return $mResult;
+			$mFileInfo = $this->_getFileInfo($aArgs['Path'], $aArgs['Id']);
+			if ($mFileInfo)
+			{
+				$mResult = $this->PopulateFileInfo($mFileInfo);
+			}
+			return true;
+		}		
 	}	
 	
 	/**
