@@ -3,7 +3,7 @@
 	"type": "aurora-module",
 	"require": {
 		"php": ">=5.4.0",
-		"afterlogic/aurora-framework": "~0.7",
+		"afterlogic/aurora-framework": "~0.8",
 		"kunalvarma05/dropbox-php-sdk": "^0.2.1",
 		"tightenco/collect": "5.5.32"
 	},
