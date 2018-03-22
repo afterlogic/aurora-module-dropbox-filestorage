@@ -45,7 +45,8 @@ class Module extends \Aurora\System\Module\AbstractModule
 		$this->subscribeEvent('Files::Move::after', array($this, 'onAfterMove'));
 		$this->subscribeEvent('Files::Copy::after', array($this, 'onAfterCopy')); 
 		$this->subscribeEvent('Files::GetFileInfo::after', array($this, 'onAfterGetFileInfo'));
-		$this->subscribeEvent('PopulateFileItem', array($this, 'onPopulateFileItem'));
+		$this->subscribeEvent('Files::PopulateFileItem::after', array($this, 'onAfterPopulateFileItem'));
+		
 		$this->subscribeEvent('Dropbox::GetSettings', array($this, 'onGetSettings'));
 		$this->subscribeEvent('Dropbox::UpdateSettings::after', array($this, 'onAfterUpdateSettings'));
 		
@@ -328,7 +329,6 @@ class Module extends \Aurora\System\Module\AbstractModule
 					}
 				}				
 			}
-			return true;
 		}
 	}	
 
@@ -554,7 +554,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 * @param object $oItem
 	 * @return boolean
 	 */
-	public function onPopulateFileItem($aArgs, &$oItem)
+	public function onAfterPopulateFileItem($aArgs, &$oItem)
 	{
 		if ($oItem->IsLink)
 		{
