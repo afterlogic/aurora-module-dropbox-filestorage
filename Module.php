@@ -260,23 +260,24 @@ class Module extends \Aurora\System\Module\AbstractModule
 			if ($oClient)
 			{
 				$sFullPath = $aArgs['Path'] . '/'  .  ltrim($aArgs['Name'], '/');
-				if (!isset($aArgs['IsThumb']))
-				{
-					$mDownloadResult = $oClient->download($sFullPath);
-					if ($mDownloadResult)
-					{
-						$mResult = \fopen('php://memory','r+');
-						\fwrite($mResult, $mDownloadResult->getContents());
-						\rewind($mResult);
-					}
-				}
-				else
+				
+				if (isset($aArgs['IsThumb']) && (bool)$aArgs['IsThumb'] === true)
 				{
 					$oThumbnail = $oClient->getThumbnail($sFullPath, 'medium', 'png');
 					if ($oThumbnail)
 					{
 						$mResult = \fopen('php://memory','r+');
 						\fwrite($mResult, $oThumbnail->getContents());
+						\rewind($mResult);
+					}
+				}
+				else
+				{
+					$mDownloadResult = $oClient->download($sFullPath);
+					if ($mDownloadResult)
+					{
+						$mResult = \fopen('php://memory','r+');
+						\fwrite($mResult, $mDownloadResult->getContents());
 						\rewind($mResult);
 					}
 				}
@@ -316,7 +317,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$oItems = $oListFolderContents->getItems();
 					$aItems = $oItems->all();
 				}
-
+				
 				foreach($aItems as $oChild) 
 				{
 					if ($oChild instanceof \Kunnu\Dropbox\Models\SearchResult)
@@ -330,6 +331,8 @@ class Module extends \Aurora\System\Module\AbstractModule
 					}
 				}				
 			}
+			
+			return true;
 		}
 	}	
 
