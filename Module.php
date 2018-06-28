@@ -283,7 +283,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 				}
 			}
 			
-			return true;
+			return false;
 		}
 	}	
 	
@@ -332,7 +332,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 				}				
 			}
 			
-			return true;
+			return false;
 		}
 	}	
 
@@ -359,7 +359,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
-			return true;
+			return false;
 		}
 	}	
 
@@ -394,7 +394,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 				
-				return true;
+				return false;
 			}
 		}
 	}	
@@ -422,7 +422,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
-			return true;
+			return false;
 		}
 	}	
 
@@ -450,7 +450,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 				}
 			}
 			
-			return true;
+			return false;
 		}
 	}	
 
@@ -480,7 +480,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
-			return true;
+			return false;
 		}
 	}	
 
@@ -510,7 +510,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
-			return true;
+			return false;
 		}
 	}		
 	
@@ -548,7 +548,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 			{
 				$mResult = $this->PopulateFileInfo($mFileInfo);
 			}
-			return true;
+			return false;
 		}		
 	}	
 	
@@ -576,7 +576,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$oItem->ThumbnailUrl = \MailSo\Base\Http::SingletonInstance()->GetFullUrl() . 'modules/' . $this->GetName() . '/images/dropbox.png';
 				}
 				$oItem->LinkType = 'dropbox';
-				return true;
+				return false;
 			}
 		}
 	}	
