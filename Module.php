@@ -447,8 +447,6 @@ class Module extends \Aurora\System\Module\AbstractModule
 					$mResult = true;
 				}
 			}
-			
-			return true;
 		}
 	}	
 
