@@ -5,10 +5,7 @@
  * For full statements of the licenses see LICENSE-AFTERLOGIC and LICENSE-AGPL3 files.
  */
 
-namespace Aurora\Modules\DigitalOceanFilestorage;
-
-use Aws\S3\S3Client;
-use GuzzleHttp\RedirectMiddleware;
+namespace Aurora\Modules\DropboxFilestorage;
 
 /**
  * @license https://www.gnu.org/licenses/agpl-3.0.html AGPL-3.0
@@ -19,21 +16,21 @@ use GuzzleHttp\RedirectMiddleware;
  */
 class Module extends \Aurora\System\Module\AbstractModule
 {
-	protected static $sStorageType = 'digitalocean';
+	protected static $sStorageType = 'dropbox';
 	protected $oClient = null;
-	protected $sUserPublicId = null;
-
-	protected $sBucketPrefix;
-	protected $sBucket;
-	protected $sRegion;
-	protected $sHost;
-	protected $sAccessKey;
-	protected $sSecretKey;
-
+	protected $aRequireModules = array(
+		'OAuthIntegratorWebclient', 
+		'DropboxAuthWebclient'
+	);
+	
+	protected function issetScope($sScope)
+	{
+		return in_array($sScope, explode(' ', $this->getConfig('Scopes')));
+	}	
 	
 	/***** private functions *****/
 	/**
-	 * Initializes Module.
+	 * Initializes DropBox Module.
 	 * 
 	 * @ignore
 	 */
@@ -50,41 +47,15 @@ class Module extends \Aurora\System\Module\AbstractModule
 		$this->subscribeEvent('Files::Copy::after', array($this, 'onAfterCopy')); 
 		$this->subscribeEvent('Files::GetFileInfo::after', array($this, 'onAfterGetFileInfo'));
 		$this->subscribeEvent('Files::PopulateFileItem::after', array($this, 'onAfterPopulateFileItem'));
+		
+		$this->subscribeEvent('Dropbox::GetSettings', array($this, 'onGetSettings'));
+		$this->subscribeEvent('Dropbox::UpdateSettings::after', array($this, 'onAfterUpdateSettings'));
+		
 		$this->subscribeEvent('Files::GetItems::before', array($this, 'CheckUrlFile'));
 		$this->subscribeEvent('Files::UploadFile::before', array($this, 'CheckUrlFile'));
 		$this->subscribeEvent('Files::CreateFolder::before', array($this, 'CheckUrlFile'));
-
-		$this->subscribeEvent('System::download-file-entry::before', array($this, 'onBeforeDownloadFileEntry'));
-
-		$this->sBucketPrefix = $this->getConfig('BucketPrefix');
-		$this->sBucket = \strtolower($this->sBucketPrefix . $this->getTenantName());
-		$this->sHost = $this->getConfig('Host');
-		$this->sRegion = $this->getConfig('Region');
-		$this->sAccessKey = $this->getConfig('AccessKey');
-		$this->sSecretKey = $this->getConfig('SecretKey');
 	}
 	
-	protected function getS3Client($endpoint, $bucket_endpoint = false)
-	{
-		$signature_version = 'v4';
-		if (!$bucket_endpoint)
-		{
-			$signature_version = 'v4-unsigned-body';
-		}
-
-		return S3Client::factory([
-			'region' => $this->sRegion,
-			'version' => 'latest',
-			'endpoint' => $endpoint,
-			'credentials' => [
-				'key'    => $this->sAccessKey,
-				'secret' => $this->sSecretKey,
-			],
-			'bucket_endpoint' => $bucket_endpoint,
-			'signature_version' => $signature_version
-		]);					
-	}
-
 	/**
 	 * Obtains DropBox client if passed $sType is DropBox account type.
 	 * 
@@ -93,49 +64,39 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 */
 	protected function getClient()
 	{
+		
+		$oDropboxModule = \Aurora\System\Api::GetModule('Dropbox');
+		if ($oDropboxModule instanceof \Aurora\System\Module\AbstractModule)
+		{
+			if (!$oDropboxModule->getConfig('EnableModule', false) || !$this->issetScope('storage'))
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}		
+		
 		if ($this->oClient === null)
 		{
 			\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
 
-			$endpoint = "https://".$this->sRegion.".".$this->sHost;
-
-			$oS3Client = $this->getS3Client($endpoint);
-
-			if(!$oS3Client->doesBucketExist($this->sBucket)) 
+			$oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
+			$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
+			if ($oOAuthAccount)
 			{
-				$oS3Client->createBucket([
-					'Bucket' => $this->sBucket
-				]);
+				$oDropboxApp = new \Kunnu\Dropbox\DropboxApp(
+					\Aurora\System\Api::GetModule('Dropbox')->getConfig('Id'),
+					\Aurora\System\Api::GetModule('Dropbox')->getConfig('Secret'),
+					$oOAuthAccount->AccessToken
+				);
+				$this->oClient = new \Kunnu\Dropbox\Dropbox($oDropboxApp);
 			}
-	
-			$endpoint = "https://".$this->sBucket.".".$this->sRegion.".".$this->sHost;
-			$this->oClient = $this->getS3Client($endpoint, true);
 		}
 		
 		return $this->oClient;
 	}	
-
-	protected function getPublicUserId()
-	{
-		if (!isset($this->sUserPublicId))
-		{
-			$oUser = \Aurora\System\Api::getAuthenticatedUser();
-			$this->sUserPublicId = $oUser->PublicId;
-		}
-
-		return $this->sUserPublicId;
-	}
-
-	protected function getTenantName()
-	{
-		if (!isset($this->sTenantName))
-		{
-			$this->sTenantName = \Aurora\System\Api::getTenantName();
-		}
-
-		return $this->sTenantName;
-	}
-
 	
 	/**
 	 * Write to the $aResult variable information about DropBox storage.
@@ -146,13 +107,30 @@ class Module extends \Aurora\System\Module\AbstractModule
 	public function onAfterGetStorages($aArgs, &$mResult)
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
+		
+		$bEnableDropboxModule = false;
+		$oDropboxModule = \Aurora\System\Api::GetModule('Dropbox');
+		if ($oDropboxModule instanceof \Aurora\System\Module\AbstractModule)
+		{
+			$bEnableDropboxModule = $oDropboxModule->getConfig('EnableModule', false);
+		}
+		else
+		{
+			$bEnableDropboxModule = false;
+		}
+		
+		
+		$oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
+		$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
 
-		if (!$this->getConfig('Disabled', true))
+		if ($oOAuthAccount instanceof \Aurora\Modules\OAuthIntegratorWebclient\Classes\Account && 
+				$oOAuthAccount->Type === self::$sStorageType &&
+					$this->issetScope('storage') && $oOAuthAccount->issetScope('storage'))
 		{		
 			$mResult[] = [
 				'Type' => self::$sStorageType, 
 				'IsExternal' => true,
-				'DisplayName' => 'Digital Ocean'
+				'DisplayName' => 'Dropbox'
 			];
 		}
 	}
@@ -219,37 +197,22 @@ class Module extends \Aurora\System\Module\AbstractModule
 		$mResult = false;
 		if ($aData)
 		{
-			$sKey = $aData['Key'];
-			list($sPath, $sFile) = \Sabre\Uri\split($aData['Key']);
-
-			$sUserPublicId = $this->getPublicUserId();
-			$sPath = substr($sPath, strlen($sUserPublicId));
-/*
-			$oObject = $this->getClient()->HeadObject([
-				'Bucket' => $this->sBucket,
-				'Key' => $aData['Key'],
-			]);
-*/
-			$bIsFolder = substr($aData['Key'], -1) === '/';
-
-			$sName = basename($aData['Key']);
+			$sPath = ltrim($this->getDirName($aData->getPathDisplay()), '/');
 			
 			$mResult /*@var $mResult \Aurora\Modules\Files\Classes\FileItem */ = new  \Aurora\Modules\Files\Classes\FileItem();
 			$mResult->IsExternal = true;
 			$mResult->TypeStr = self::$sStorageType;
-			$mResult->IsFolder = $bIsFolder;
-			$mResult->Id = $sFile;
-			$mResult->Name = $sName;
-			$mResult->Path = $sPath;
-			$mResult->Size = $aData['Size'];
-
-			$mResult->Owner = $sUserPublicId;
-
-//			if (!$mResult->IsFolder)
-//			{
-//				$mResult->LastModified =  date("U",strtotime($aData->getServerModified()));
-//			}
-
+			$mResult->IsFolder = ($aData instanceof \Kunnu\Dropbox\Models\FolderMetadata);
+			$mResult->Id = $aData->getName();
+			$mResult->Name = $mResult->Id;
+			$mResult->Path = !empty($sPath) ? '/'.$sPath : $sPath;
+			$mResult->Size = !$mResult->IsFolder ? $aData->getSize() : 0;
+//			$bResult->Owner = $oSocial->Name;
+			if (!$mResult->IsFolder)
+			{
+				$mResult->LastModified =  date("U",strtotime($aData->getServerModified()));
+			}
+//			$mResult->Shared = isset($aData['shared']) ? $aData['shared'] : false;
 			$mResult->FullPath = $mResult->Name !== '' ? $mResult->Path . '/' . $mResult->Name : $mResult->Path ;
 			$mResult->ContentType = \Aurora\System\Utils::MimeContentType($mResult->Name);
 			
@@ -293,6 +256,33 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		if ($aArgs['Type'] === self::$sStorageType)
 		{
+			$oClient = $this->getClient();
+			if ($oClient)
+			{
+				$sFullPath = $aArgs['Path'] . '/'  .  ltrim($aArgs['Name'], '/');
+				
+				if (isset($aArgs['IsThumb']) && (bool)$aArgs['IsThumb'] === true)
+				{
+					$oThumbnail = $oClient->getThumbnail($sFullPath, 'medium', 'png');
+					if ($oThumbnail)
+					{
+						$mResult = \fopen('php://memory','r+');
+						\fwrite($mResult, $oThumbnail->getContents());
+						\rewind($mResult);
+					}
+				}
+				else
+				{
+					$mDownloadResult = $oClient->download($sFullPath);
+					if ($mDownloadResult)
+					{
+						$mResult = \fopen('php://memory','r+');
+						\fwrite($mResult, $mDownloadResult->getContents());
+						\rewind($mResult);
+					}
+				}
+			}
+			
 			return true;
 		}
 	}	
@@ -305,45 +295,39 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 */
 	public function onAfterGetItems($aArgs, &$mResult)
 	{
-		$sUserPublicId = $this->getPublicUserId();
-
 		if ($aArgs['Type'] === self::$sStorageType)
 		{
+			$mResult['Items'] = array();
 			$oClient = $this->getClient();
-
 			if ($oClient)
 			{
-				$Root = $sUserPublicId . '/';
-				$Path =  rtrim($Root . ltrim($aArgs['Path'], '/'), '/') . '/';
-				$iSlashesCount = substr_count($Path, '/');
-
-				$results = $oClient->getPaginator('ListObjectsV2', [
-					'Bucket' => $this->sBucket,
-					'Prefix' => $Path
-				]);
-
-				$sFilter = 'Contents[?starts_with(Key, `' . $Path . '`)%s]';
-				if (!empty($aArgs['Pattern']))
+				$aItems = array();
+				$Path = '/'.ltrim($aArgs['Path'], '/');
+				if (empty($aArgs['Pattern']))
 				{
-					$sFilter = sprintf($sFilter,  '&& contains(Key, `' . $aArgs['Pattern'] . '`)'); 
+					$oListFolderContents = $oClient->listFolder($Path);
+					$oItems = $oListFolderContents->getItems();
+					$aItems = $oItems->all();
 				}
 				else
 				{
-					$sFilter = sprintf($sFilter,  ''); 
+					$oListFolderContents = $oClient->search($Path, $aArgs['Pattern']);
+					$oItems = $oListFolderContents->getItems();
+					$aItems = $oItems->all();
 				}
-				foreach ($results->search($sFilter) as $item) 
+				
+				foreach($aItems as $oChild) 
 				{
-					$iItemSlashesCount = substr_count($item['Key'], '/');
-					if ($iItemSlashesCount === $iSlashesCount && substr($item['Key'], -1) !== '/' || 
-						$iItemSlashesCount === $iSlashesCount + 1 && substr($item['Key'], -1) === '/' || !empty($aArgs['Pattern']))
+					if ($oChild instanceof \Kunnu\Dropbox\Models\SearchResult)
 					{
-						$oItem /*@var $oItem \Aurora\Modules\Files\Classes\FileItem */ = $this->populateFileInfo($item);
-						if ($oItem)
-						{
-							$mResult[] = $oItem;
-						}
+						$oChild = $oChild->getMetadata();
 					}
-				}
+					$oItem /*@var $oItem \Aurora\Modules\Files\Classes\FileItem */ = $this->populateFileInfo($oChild);
+					if ($oItem)
+					{
+						$mResult['Items'][] = $oItem;
+					}
+				}				
 			}
 			
 			return true;
@@ -366,16 +350,9 @@ class Module extends \Aurora\System\Module\AbstractModule
 			if ($oClient)
 			{
 				$mResult = false;
+				$sPath = $aArgs['Path'];
 				
-				$sUserPublicId = $this->getPublicUserId();
-
-				$res = $this->getClient()->putObject([
-					'Bucket' => $this->sBucket,
-					'Key' => $sUserPublicId . $aArgs['Path'].'/'.$aArgs['FolderName'] . '/',
-					'Body' => ''
-				]);
-
-				if ($res)
+				if ($oClient->createFolder($sPath.'/'.$aArgs['FolderName']) !== null)
 				{
 					$mResult = true;
 				}
@@ -399,11 +376,9 @@ class Module extends \Aurora\System\Module\AbstractModule
 			$oClient = $this->getClient();
 			if ($oClient)
 			{
-				$Result = false;
+				$mResult = false;
 
-				$sUserPublicId = $this->getPublicUserId();
-	
-				$Path = $sUserPublicId . $aArgs['Path'].'/'.$aArgs['Name'];
+				$Path = $aArgs['Path'].'/'.$aArgs['Name'];
 				$rData = $aArgs['Data'];
 				if (!is_resource($aArgs['Data']))
 				{
@@ -411,21 +386,12 @@ class Module extends \Aurora\System\Module\AbstractModule
 					fwrite($rData, $aArgs['Data']);
 					rewind($rData);					
 				}
-
-				$aMetadata = isset($aArgs['ExtendedProps']) ? $aArgs['ExtendedProps'] : [];
-
-				$res = $this->getClient()->putObject([
-					'Bucket' => $this->sBucket,
-					'Key' => $Path,
-					'Body' => $rData,
-					'Metadata' => $aMetadata
-				]);
-
-				if ($res)
+				$oDropboxFile = \Kunnu\Dropbox\DropboxFile::createByStream($aArgs['Name'], $rData);
+				if ($oClient->upload($oDropboxFile,	$Path))
 				{
-					$Result = true;
+					$mResult = true;
 				}
-
+				
 				return true;
 			}
 		}
@@ -448,60 +414,15 @@ class Module extends \Aurora\System\Module\AbstractModule
 			{
 				$mResult = false;
 
-				$sUserPublicId = $this->getPublicUserId();
-					
-				$aObjects = [];
 				foreach ($aArgs['Items'] as $aItem)
 				{
-					$aObjects[]= [
-						'Key' => $sUserPublicId . $aItem['Path'].'/'.$aItem['Name']
-					];
-				}
-				
-				$res = $oClient->deleteObjects([
-					'Bucket' => $this->sBucket,
-					'Delete' => [
-						'Objects' => $aObjects,
-					]
-				]);	
-				if ($res)	
-				{
+					$oClient->delete($aItem['Path'].'/'.$aItem['Name']);
 					$mResult = true;
 				}
 			}
 			return true;
 		}
 	}	
-
-	protected function copyObject($sFromPath, $sToPath, $sOldName, $sNewName, $bMove = false)
-	{
-		$mResult = false;
-
-		$sUserPublicId = $this->getPublicUserId();
-
-		$sFullFromPath = $this->sBucket . '/' . $sUserPublicId . $sFromPath . '/' . $sOldName;
-		$sFullToPath = $sUserPublicId . $sToPath.'/'.$sNewName;
-
-		$oClient = $this->getClient();
-		$res = $oClient->copyObject([
-			'Bucket' => $this->sBucket,
-			'Key' => $sFullToPath,
-			'CopySource' => $sFullFromPath
-		]);
-		if ($res)	
-		{
-			if ($bMove)
-			{
-				$res = $oClient->deleteObject([
-					'Bucket' => $this->sBucket,
-					'Key' => $sUserPublicId . $sFromPath.'/'.$sOldName
-				]);					
-			}
-			$mResult = true;
-		}
-
-		return $mResult;
-	}
 
 	/**
 	 * Renames file if $aData['Type'] is DropBox account type.
@@ -518,7 +439,13 @@ class Module extends \Aurora\System\Module\AbstractModule
 			$oClient = $this->getClient();
 			if ($oClient)
 			{
-				$mResult = $this->copyObject($aArgs['Path'], $aArgs['Path'], $aArgs['Name'], $aArgs['NewName'], true);
+				$mResult = false;
+
+				$sPath = $aArgs['Path'];
+				if ($oClient->move($sPath.'/'.$aArgs['Name'], $sPath.'/'.$aArgs['NewName']))
+				{
+					$mResult = true;
+				}
 			}
 		}
 	}	
@@ -538,12 +465,13 @@ class Module extends \Aurora\System\Module\AbstractModule
 			$oClient = $this->getClient();
 			if ($oClient)
 			{
+				$mResult = false;
 
 				if ($aArgs['ToType'] === $aArgs['FromType'])
 				{
 					foreach ($aArgs['Files'] as $aFile)
 					{
-						$this->copyObject($aFile['FromPath'], $aArgs['ToPath'], $aFile['Name'], $aFile['Name'], true);
+						$oClient->move($aArgs['FromPath'].'/'.$aFile['Name'], $aArgs['ToPath'].'/'.$aFile['Name']);
 					}
 					$mResult = true;
 				}
@@ -573,7 +501,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 				{
 					foreach ($aArgs['Files'] as $aFile)
 					{
-						$this->copyObject($aFile['FromPath'], $aArgs['ToPath'], $aFile['Name'], $aFile['Name']);
+						$oClient->copy($aArgs['FromPath'].'/'.$aFile['Name'], $aArgs['ToPath'].'/'.$aFile['Name']);
 					}
 					$mResult = true;
 				}
@@ -628,6 +556,25 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 */
 	public function onAfterPopulateFileItem($aArgs, &$oItem)
 	{
+		if ($oItem->IsLink)
+		{
+			if (false !== strpos($oItem->LinkUrl, 'dl.dropboxusercontent.com') || 
+					false !== strpos($oItem->LinkUrl, 'dropbox.com'))
+			{
+				$aMetadata = $this->getMetadataLink($oItem->LinkUrl);
+				if (isset($aMetadata['path']) && $aMetadata['is_dir'])
+				{
+					$oItem->UnshiftAction(array(
+						'list' => array()
+					));
+
+					$oItem->Thumb = true;
+					$oItem->ThumbnailUrl = \MailSo\Base\Http::SingletonInstance()->GetFullUrl() . 'modules/' . self::GetName() . '/images/dropbox.png';
+				}
+				$oItem->LinkType = 'dropbox';
+				return true;
+			}
+		}
 	}	
 	
 	protected function getMetadataLink($sLink)
@@ -761,78 +708,4 @@ class Module extends \Aurora\System\Module\AbstractModule
 		$this->setConfig('Scopes', $sScope);
 		$this->saveModuleConfig();
 	}
-
-	public function onBeforeDownloadFileEntry()
-	{
-		$sHash = (string) \Aurora\System\Application::GetPathItemByIndex(1, '');
-		$sAction = (string) \Aurora\System\Application::GetPathItemByIndex(2, '');
-		$iOffset = (int) \Aurora\System\Application::GetPathItemByIndex(3, '');
-		$iChunkSize = (int) \Aurora\System\Application::GetPathItemByIndex(4, '');
-
-		$aValues = \Aurora\System\Api::DecodeKeyValues($sHash);
-
-		if ($aValues['Type'] === self::$sStorageType)
-		{
-			$iUserId = isset($aValues['UserId']) ? (int) $aValues['UserId'] : 0;
-			$sPath = isset($aValues['Path']) ? $aValues['Path'] : '';
-			$sFileName = isset($aValues['Name']) ? $aValues['Name'] : '';
-			$sPublicHash = isset($aValues['PublicHash']) ? $aValues['PublicHash'] : null;
-
-			$oUser = \Aurora\System\Api::getAuthenticatedUser();
-			$sUserPublicId = $oUser->PublicId;
-
-			$aArgs = [
-				'Bucket' => $this->sBucket,
-				'Key' => $sUserPublicId . $sPath . $sFileName,
-			];
-
-			if ($sAction === '' || $sAction === 'download')
-			{
-				$aArgs['ResponseContentType'] = 'application/octet-stream';
-				$aArgs['ResponseContentDisposition'] = 'attachment; filename="'. $sFileName .'"';
-			}
-
-			if ($sAction === 'thumb') 
-			{
-				if (!empty($sHash))
-				{
-					\Aurora\System\Managers\Response::verifyCacheByKey($sHash);
-				}
-				$oCache = new \Aurora\System\Managers\Cache('thumbs', \Aurora\System\Api::getUserUUIDById($iUserId));
-				$sCacheFileName = \md5('Raw/Thumb/'.$sHash.'/'.$sFileName);
-				$sThumb = $oCache->get($sCacheFileName);
-
-				if (!$sThumb)
-				{
-					$oObject = $this->getClient()->GetObject($aArgs);
-
-					$rResource = $oObject['Body'];
-
-					$iRotateAngle = 0;
-					$oImageManager = new \Intervention\Image\ImageManager(['driver' => 'Gd']);
-					$oThumb = $oImageManager->make($rResource);
-					if ($iRotateAngle > 0)
-					{
-						$oThumb = $oThumb->rotate($iRotateAngle);
-					}
-					$sThumb = $oThumb->heighten(100)->widen(100)->response();
-					$oCache->set($sCacheFileName, $sThumb);
-				}
-
-				$sContentType = \MailSo\Base\Utils::MimeContentType($sFileName);
-				\Aurora\System\Managers\Response::OutputHeaders(false, $sContentType, $sFileName);
-
-				echo $sThumb;
-				exit;
-			} 			
-
-			//Creating a presigned URL
-			$cmd = $this->getClient()->getCommand('GetObject', $aArgs);
-			$request = $this->getClient()->createPresignedRequest($cmd, '+5 minutes');			
-			header('Location: ' . (string) $request->getUri());
-			exit;
-		}
-	}
-
-
 }
