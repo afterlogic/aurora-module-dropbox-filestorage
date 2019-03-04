@@ -3,8 +3,24 @@
 		false,
 		"bool"
 	],
-    "Scopes": [
-        "storage",
+    "AccessKey": [
+        "",
+        "string"
+    ],
+    "SecretKey": [
+        "",
+        "string"
+    ],
+    "Region": [
+        "",
+        "string"
+    ],
+    "Host": [
+        "",
+        "string"
+    ],
+    "BucketPrefix": [
+        "",
         "string"
     ]
 }
