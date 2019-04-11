@@ -54,6 +54,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 		$this->subscribeEvent('Files::GetItems::before', array($this, 'CheckUrlFile'));
 		$this->subscribeEvent('Files::UploadFile::before', array($this, 'CheckUrlFile'));
 		$this->subscribeEvent('Files::CreateFolder::before', array($this, 'CheckUrlFile'));
+		$this->subscribeEvent('Files::CheckQuota::after', array($this, 'onAfterCheckQuota'));
 	}
 	
 	/**
@@ -367,7 +368,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 * @ignore
 	 * @param array $aData
 	 */
-	public function onCreateFile($aArgs, &$Result)
+	public function onCreateFile($aArgs, &$mResult)
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 		
@@ -707,5 +708,31 @@ class Module extends \Aurora\System\Module\AbstractModule
 		}
 		$this->setConfig('Scopes', $sScope);
 		$this->saveModuleConfig();
+	}
+
+	/**
+	 * Checks if storage type is personal.
+	 *
+	 * @param string $Type Storage type.
+	 * @return bool
+	 */
+	protected function checkStorageType($Type)
+	{
+		return $Type === static::$sStorageType;
+	}
+
+	/**
+	 * @ignore
+	 * @param array $aArgs Arguments of event.
+	 * @param mixed $mResult Is passed by reference.
+	 */
+	public function onAfterCheckQuota($aArgs, &$mResult)
+	{
+		$Type = $aArgs['Type'];
+		if ($this->checkStorageType($Type))
+		{
+			$mResult = true;
+			return true;
+		}
 	}
 }
