@@ -19,6 +19,7 @@ namespace Aurora\Modules\DropboxFilestorage;
 class Module extends \Aurora\System\Module\AbstractModule
 {
 	protected static $sStorageType = 'dropbox';
+	protected static $iStorageOrder = 100;
 	protected $oClient = null;
 	protected $aRequireModules = array(
 		'OAuthIntegratorWebclient', 
@@ -133,7 +134,8 @@ class Module extends \Aurora\System\Module\AbstractModule
 			$mResult[] = [
 				'Type' => self::$sStorageType, 
 				'IsExternal' => true,
-				'DisplayName' => 'Dropbox'
+				'DisplayName' => 'Dropbox',
+				'Order' => self::$iStorageOrder, 
 			];
 		}
 	}
