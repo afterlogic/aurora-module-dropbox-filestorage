@@ -136,6 +136,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 				'IsExternal' => true,
 				'DisplayName' => 'Dropbox',
 				'Order' => self::$iStorageOrder, 
+				'IsDroppable' => true
 			];
 		}
 	}
