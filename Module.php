@@ -177,7 +177,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 			'Type' => $oItem->TypeStr,
 			'Path' => '',
 			'Name' => $oItem->FullPath,
-			'FileName' => $oItem->FileName
+			'FileName' => $oItem->Name
 		));
 	}
 
