@@ -5,7 +5,7 @@
 		"php": ">=5.4.0",
 		"afterlogic/aurora-framework": "~0.9.0",
 		"kunalvarma05/dropbox-php-sdk": "^0.2.1",
-		"tightenco/collect": "5.5.32"
+		"tightenco/collect": "5.5.33"
 	},
 	"extra": {
 		"installer-name": "DropboxFilestorage"
