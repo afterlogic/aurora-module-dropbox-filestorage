@@ -127,7 +127,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 		$oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
 		$oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
 
-		if ($oOAuthAccount instanceof \Aurora\Modules\OAuthIntegratorWebclient\Classes\Account &&
+		if ($oOAuthAccount instanceof \Aurora\Modules\OAuthIntegratorWebclient\Models\OauthAccount &&
 				$oOAuthAccount->Type === self::$sStorageType &&
 					$this->issetScope('storage') && $oOAuthAccount->issetScope('storage'))
 		{
@@ -683,7 +683,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 			}
 			if ($oUser->isNormalOrTenant())
 			{
-				if ($aArgs['OAuthAccount'] instanceof \Aurora\Modules\OAuthIntegratorWebclient\Classes\Account)
+				if ($aArgs['OAuthAccount'] instanceof \Aurora\Modules\OAuthIntegratorWebclient\Models\OauthAccount)
 				{
 					$aScope['Value'] = $aArgs['OAuthAccount']->issetScope('storage');
 				}
