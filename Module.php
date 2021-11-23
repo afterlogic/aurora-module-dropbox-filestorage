@@ -41,7 +41,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		$this->subscribeEvent('Files::GetStorages::after', array($this, 'onAfterGetStorages'));
 		$this->subscribeEvent('Files::GetFile', array($this, 'onGetFile'));
-		$this->subscribeEvent('Files::GetItems::after', array($this, 'onAfterGetItems'));
+		$this->subscribeEvent('Files::GetItems', array($this, 'onGetItems'));
 		$this->subscribeEvent('Files::CreateFolder::after', array($this, 'onAfterCreateFolder'));
 		$this->subscribeEvent('Files::CreateFile', array($this, 'onCreateFile'));
 		$this->subscribeEvent('Files::Delete::after', array($this, 'onAfterDelete'));
@@ -300,7 +300,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	 * @ignore
 	 * @param array $aData Is passed by reference.
 	 */
-	public function onAfterGetItems($aArgs, &$mResult)
+	public function onGetItems($aArgs, &$mResult)
 	{
 		if ($aArgs['Type'] === self::$sStorageType)
 		{
