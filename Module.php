@@ -582,6 +582,8 @@ class Module extends \Aurora\System\Module\AbstractModule
 				return true;
 			}
 		}
+
+		return false;
 	}
 
 	protected function getMetadataLink($sLink)
