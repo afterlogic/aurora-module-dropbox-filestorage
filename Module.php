@@ -26,6 +26,14 @@ class Module extends \Aurora\System\Module\AbstractModule
         'DropboxAuthWebclient'
     );
 
+    /**
+     * @return Module
+     */
+    public static function Decorator()
+    {
+        return parent::Decorator();
+    }
+
     protected function issetScope($sScope)
     {
         return in_array($sScope, explode(' ', $this->getConfig('Scopes')));
@@ -63,8 +71,7 @@ class Module extends \Aurora\System\Module\AbstractModule
     /**
      * Obtains DropBox client if passed $sType is DropBox account type.
      *
-     * @param string $sType Service type.
-     * @return \Dropbox\Client
+     * @return \Kunnu\Dropbox\Dropbox
      */
     protected function getClient()
     {
@@ -96,10 +103,11 @@ class Module extends \Aurora\System\Module\AbstractModule
     }
 
     /**
-     * Write to the $aResult variable information about DropBox storage.
+     * Write to the $mResult variable information about DropBox storage.
      *
      * @ignore
-     * @param array $aData Is passed by reference.
+     * @param array $aArgs
+     * @param array $mResult
      */
     public function onAfterGetStorages($aArgs, &$mResult)
     {
@@ -156,8 +164,8 @@ class Module extends \Aurora\System\Module\AbstractModule
 
     /**
      *
-     * @param type $oItem
-     * @return type
+     * @param \Aurora\Modules\Files\Classes\FileItem $oItem
+     * @return string
      */
     protected function getItemHash($oItem)
     {
@@ -181,9 +189,7 @@ class Module extends \Aurora\System\Module\AbstractModule
     /**
      * Populates file info.
      *
-     * @param string $sType Service type.
-     * @param \Dropbox\Client $oClient DropBox client.
-     * @param array $aData Array contains information about file.
+     * @param \Kunnu\Dropbox\Models\FileMetadata|\Kunnu\Dropbox\Models\FolderMetadata $aData contains information about file.
      * @return \Aurora\Modules\Files\Classes\FileItem|false
      */
     protected function populateFileInfo($aData)
@@ -236,12 +242,10 @@ class Module extends \Aurora\System\Module\AbstractModule
      * Writes to the $mResult variable open file source if $sType is DropBox account type.
      *
      * @ignore
-     * @param int $iUserId Identifier of the authenticated user.
-     * @param string $sType Service type.
-     * @param string $sFullPath File path.
-     * @param string $sName File name.
-     * @param boolean $bThumb **true** if thumbnail is expected.
+     * @param array $aArgs
      * @param mixed $mResult
+
+     * @return bool|void
      */
     public function onGetFile($aArgs, &$mResult)
     {
@@ -272,10 +276,13 @@ class Module extends \Aurora\System\Module\AbstractModule
     }
 
     /**
-     * Writes to $aData variable list of DropBox files if $aData['Type'] is DropBox account type.
+     * Writes to $aArgs variable list of DropBox files if $aArgs['Type'] is DropBox account type.
      *
      * @ignore
-     * @param array $aData Is passed by reference.
+     * @param array $aArgs Is passed by reference.
+     * @param mixed $mResult
+     * 
+     * @return bool|void
      */
     public function onGetItems($aArgs, &$mResult)
     {
@@ -311,10 +318,13 @@ class Module extends \Aurora\System\Module\AbstractModule
     }
 
     /**
-     * Creates folder if $aData['Type'] is DropBox account type.
+     * Creates folder if $aArgs['Type'] is DropBox account type.
      *
      * @ignore
-     * @param array $aData Is passed by reference.
+     * @param array $aArgs
+     * @param mixed $mResult
+     * 
+     * @return bool|void
      */
     public function onAfterCreateFolder($aArgs, &$mResult)
     {
@@ -335,10 +345,13 @@ class Module extends \Aurora\System\Module\AbstractModule
     }
 
     /**
-     * Creates file if $aData['Type'] is DropBox account type.
+     * Creates file if $aArgs['Type'] is DropBox account type.
      *
      * @ignore
-     * @param array $aData
+     * @param array $aArgs
+     * @param mixed $mResult
+     * 
+     * @return bool|void
      */
     public function onCreateFile($aArgs, &$mResult)
     {
@@ -367,10 +380,13 @@ class Module extends \Aurora\System\Module\AbstractModule
     }
 
     /**
-     * Deletes file if $aData['Type'] is DropBox account type.
+     * Deletes file if $aArgs['Type'] is DropBox account type.
      *
      * @ignore
-     * @param array $aData
+     * @param array $aArgs
+     * @param mixed $mResult
+     * 
+     * @return bool|void
      */
     public function onAfterDelete($aArgs, &$mResult)
     {
@@ -391,10 +407,13 @@ class Module extends \Aurora\System\Module\AbstractModule
     }
 
     /**
-     * Renames file if $aData['Type'] is DropBox account type.
+     * Renames file if $aArgs['Type'] is DropBox account type.
      *
      * @ignore
-     * @param array $aData
+     * @param array $aArgs
+     * @param mixed $mResult
+     * 
+     * @return bool|void
      */
     public function onAfterRename($aArgs, &$mResult)
     {
@@ -414,10 +433,13 @@ class Module extends \Aurora\System\Module\AbstractModule
     }
 
     /**
-     * Moves file if $aData['Type'] is DropBox account type.
+     * Moves file if $aArgs['Type'] is DropBox account type.
      *
      * @ignore
-     * @param array $aData
+     * @param array $aArgs
+     * @param mixed $mResult
+     * 
+     * @return bool|void
      */
     public function onAfterMove($aArgs, &$mResult)
     {
@@ -440,10 +462,13 @@ class Module extends \Aurora\System\Module\AbstractModule
     }
 
     /**
-     * Copies file if $aData['Type'] is DropBox account type.
+     * Copies file if $aArgs['Type'] is DropBox account type.
      *
      * @ignore
-     * @param array $aData
+     * @param array $aArgs
+     * @param mixed $mResult
+     * 
+     * @return bool|void
      */
     public function onAfterCopy($aArgs, &$mResult)
     {
@@ -480,12 +505,10 @@ class Module extends \Aurora\System\Module\AbstractModule
     /**
      * @ignore
      * @todo not used
-     * @param object $oAccount
-     * @param string $sType
-     * @param string $sPath
-     * @param string $sName
-     * @param boolean $mResult
-     * @param boolean $bBreak
+     * @param array $aArgs
+     * @param mixed $mResult
+     * 
+     * @return bool|void
      */
     public function onAfterGetFileInfo($aArgs, &$mResult)
     {
@@ -503,8 +526,10 @@ class Module extends \Aurora\System\Module\AbstractModule
     /**
      * @ignore
      * @todo not used
-     * @param object $oItem
-     * @return boolean
+     * @param array $aArgs
+     * @param mixed $oItem
+     * 
+     * @return bool|void
      */
     public function onAfterPopulateFileItem($aArgs, &$oItem)
     {
@@ -612,7 +637,7 @@ class Module extends \Aurora\System\Module\AbstractModule
     {
         $oUser = \Aurora\System\Api::getAuthenticatedUser();
 
-        if (!empty($oUser)) {
+        if ($oUser) {
             $aScope = array(
                 'Name' => 'storage',
                 'Description' => $this->i18N('SCOPE_FILESTORAGE'),
