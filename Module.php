@@ -281,7 +281,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      * @ignore
      * @param array $aArgs Is passed by reference.
      * @param mixed $mResult
-     * 
+     *
      * @return bool|void
      */
     public function onGetItems($aArgs, &$mResult)
@@ -323,7 +323,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      * @ignore
      * @param array $aArgs
      * @param mixed $mResult
-     * 
+     *
      * @return bool|void
      */
     public function onAfterCreateFolder($aArgs, &$mResult)
@@ -350,7 +350,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      * @ignore
      * @param array $aArgs
      * @param mixed $mResult
-     * 
+     *
      * @return bool|void
      */
     public function onCreateFile($aArgs, &$mResult)
@@ -385,7 +385,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      * @ignore
      * @param array $aArgs
      * @param mixed $mResult
-     * 
+     *
      * @return bool|void
      */
     public function onAfterDelete($aArgs, &$mResult)
@@ -412,7 +412,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      * @ignore
      * @param array $aArgs
      * @param mixed $mResult
-     * 
+     *
      * @return bool|void
      */
     public function onAfterRename($aArgs, &$mResult)
@@ -438,7 +438,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      * @ignore
      * @param array $aArgs
      * @param mixed $mResult
-     * 
+     *
      * @return bool|void
      */
     public function onAfterMove($aArgs, &$mResult)
@@ -467,7 +467,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      * @ignore
      * @param array $aArgs
      * @param mixed $mResult
-     * 
+     *
      * @return bool|void
      */
     public function onAfterCopy($aArgs, &$mResult)
@@ -507,7 +507,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      * @todo not used
      * @param array $aArgs
      * @param mixed $mResult
-     * 
+     *
      * @return bool|void
      */
     public function onAfterGetFileInfo($aArgs, &$mResult)
@@ -528,7 +528,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      * @todo not used
      * @param array $aArgs
      * @param mixed $oItem
-     * 
+     *
      * @return bool|void
      */
     public function onAfterPopulateFileItem($aArgs, &$oItem)
