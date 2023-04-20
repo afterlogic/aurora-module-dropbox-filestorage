@@ -31,13 +31,20 @@ class Module extends \Aurora\System\Module\AbstractModule
     /**
      * @return Module
      */
+    public static function getInstance()
+    {
+        return parent::getInstance();
+    }
+
+    /**
+     * @return Module
+     */
     public static function Decorator()
     {
         return parent::Decorator();
     }
 
     /**
-     *
      * @return Settings
      */
     public function getModuleSettings()
@@ -86,9 +93,9 @@ class Module extends \Aurora\System\Module\AbstractModule
      */
     protected function getClient()
     {
-        $oDropboxModule = \Aurora\System\Api::GetModule('Dropbox');
-        if ($oDropboxModule instanceof \Aurora\System\Module\AbstractModule) {
-            if (!$oDropboxModule->getConfig('EnableModule', false) || !$this->issetScope('storage')) {
+        $oDropboxModule = \Aurora\Modules\Dropbox\Module::getInstance();
+        if ($oDropboxModule) {
+            if (!$oDropboxModule->oModuleSettings->EnableModule || !$this->issetScope('storage')) {
                 return false;
             }
         } else {
@@ -102,8 +109,8 @@ class Module extends \Aurora\System\Module\AbstractModule
             $oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
             if ($oOAuthAccount) {
                 $oDropboxApp = new \Kunnu\Dropbox\DropboxApp(
-                    \Aurora\System\Api::GetModule('Dropbox')->getConfig('Id'),
-                    \Aurora\System\Api::GetModule('Dropbox')->getConfig('Secret'),
+                    $oDropboxModule->oModuleSettings->Id,
+                    $oDropboxModule->oModuleSettings->Secret,
                     $oOAuthAccount->AccessToken
                 );
                 $this->oClient = new \Kunnu\Dropbox\Dropbox($oDropboxApp);
@@ -125,20 +132,19 @@ class Module extends \Aurora\System\Module\AbstractModule
         \Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
 
         $bEnableDropboxModule = false;
-        $oDropboxModule = \Aurora\System\Api::GetModule('Dropbox');
-        if ($oDropboxModule instanceof \Aurora\System\Module\AbstractModule) {
-            $bEnableDropboxModule = $oDropboxModule->getConfig('EnableModule', false);
-        } else {
-            $bEnableDropboxModule = false;
+        $oDropboxModule = \Aurora\Modules\Dropbox\Module::getInstance();
+        if ($oDropboxModule) {
+            $bEnableDropboxModule = $oDropboxModule->oModuleSettings->EnableModule;
         }
-
 
         $oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
         $oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
 
-        if ($oOAuthAccount instanceof \Aurora\Modules\OAuthIntegratorWebclient\Models\OauthAccount &&
-                $oOAuthAccount->Type === self::$sStorageType &&
-                    $this->issetScope('storage') && $oOAuthAccount->issetScope('storage')) {
+        if ($oOAuthAccount instanceof \Aurora\Modules\OAuthIntegratorWebclient\Models\OauthAccount
+                && $bEnableDropboxModule
+                && $oOAuthAccount->Type === self::$sStorageType
+                && $this->issetScope('storage') && $oOAuthAccount->issetScope('storage')
+            ) {
             $mResult[] = [
                 'Type' => self::$sStorageType,
                 'IsExternal' => true,
