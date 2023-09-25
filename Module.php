@@ -144,7 +144,7 @@ class Module extends \Aurora\System\Module\AbstractModule
                 && $bEnableDropboxModule
                 && $oOAuthAccount->Type === self::$sStorageType
                 && $this->issetScope('storage') && $oOAuthAccount->issetScope('storage')
-            ) {
+        ) {
             $mResult[] = [
                 'Type' => self::$sStorageType,
                 'IsExternal' => true,
@@ -223,7 +223,7 @@ class Module extends \Aurora\System\Module\AbstractModule
             $mResult->IsFolder = ($aData instanceof \Kunnu\Dropbox\Models\FolderMetadata);
             $mResult->Id = $aData->getName();
             $mResult->Name = $mResult->Id;
-            $mResult->Path = !empty($sPath) ? '/'.$sPath : $sPath;
+            $mResult->Path = !empty($sPath) ? '/' . $sPath : $sPath;
             $mResult->Size = !$mResult->IsFolder ? $aData->getSize() : 0;
             //			$bResult->Owner = $oSocial->Name;
             if (!$mResult->IsFolder) {
@@ -242,7 +242,7 @@ class Module extends \Aurora\System\Module\AbstractModule
             } else {
                 $mResult->AddAction([
                     'view' => [
-                        'url' => '?download-file/' . $this->getItemHash($mResult) .'/view'
+                        'url' => '?download-file/' . $this->getItemHash($mResult) . '/view'
                     ]
                 ]);
                 $mResult->AddAction([
@@ -269,7 +269,7 @@ class Module extends \Aurora\System\Module\AbstractModule
         if ($aArgs['Type'] === self::$sStorageType) {
             $oClient = $this->getClient();
             if ($oClient) {
-                $sFullPath = $aArgs['Path'] . '/'  .  ltrim($aArgs['Name'], '/');
+                $sFullPath = $aArgs['Path'] . '/' . ltrim($aArgs['Name'], '/');
 
                 if (isset($aArgs['IsThumb']) && (bool)$aArgs['IsThumb'] === true) {
                     $oThumbnail = $oClient->getThumbnail($sFullPath, 'medium', 'png');
@@ -308,7 +308,7 @@ class Module extends \Aurora\System\Module\AbstractModule
             $oClient = $this->getClient();
             if ($oClient) {
                 $aItems = array();
-                $Path = '/'.ltrim($aArgs['Path'], '/');
+                $Path = '/' . ltrim($aArgs['Path'], '/');
                 if (empty($aArgs['Pattern'])) {
                     $oListFolderContents = $oClient->listFolder($Path);
                     $oItems = $oListFolderContents->getItems();
@@ -353,7 +353,7 @@ class Module extends \Aurora\System\Module\AbstractModule
                 $mResult = false;
                 $sPath = $aArgs['Path'];
 
-                if ($oClient->createFolder($sPath.'/'.$aArgs['FolderName']) !== null) {
+                if ($oClient->createFolder($sPath . '/' . $aArgs['FolderName']) !== null) {
                     $mResult = true;
                 }
             }
@@ -379,7 +379,7 @@ class Module extends \Aurora\System\Module\AbstractModule
             if ($oClient) {
                 $mResult = false;
 
-                $Path = $aArgs['Path'].'/'.$aArgs['Name'];
+                $Path = $aArgs['Path'] . '/' . $aArgs['Name'];
                 $rData = $aArgs['Data'];
                 if (!is_resource($aArgs['Data'])) {
                     $rData = fopen('php://memory', 'r+');
@@ -415,7 +415,7 @@ class Module extends \Aurora\System\Module\AbstractModule
                 $mResult = false;
 
                 foreach ($aArgs['Items'] as $aItem) {
-                    $oClient->delete($aItem['Path'].'/'.$aItem['Name']);
+                    $oClient->delete($aItem['Path'] . '/' . $aItem['Name']);
                     $mResult = true;
                 }
             }
@@ -442,7 +442,7 @@ class Module extends \Aurora\System\Module\AbstractModule
                 $mResult = false;
 
                 $sPath = $aArgs['Path'];
-                if ($oClient->move($sPath.'/'.$aArgs['Name'], $sPath.'/'.$aArgs['NewName'])) {
+                if ($oClient->move($sPath . '/' . $aArgs['Name'], $sPath . '/' . $aArgs['NewName'])) {
                     $mResult = true;
                 }
             }
@@ -469,7 +469,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 
                 if ($aArgs['ToType'] === $aArgs['FromType']) {
                     foreach ($aArgs['Files'] as $aFile) {
-                        $oClient->move($aArgs['FromPath'].'/'.$aFile['Name'], $aArgs['ToPath'].'/'.$aFile['Name']);
+                        $oClient->move($aArgs['FromPath'] . '/' . $aFile['Name'], $aArgs['ToPath'] . '/' . $aFile['Name']);
                     }
                     $mResult = true;
                 }
@@ -498,7 +498,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 
                 if ($aArgs['ToType'] === $aArgs['FromType']) {
                     foreach ($aArgs['Files'] as $aFile) {
-                        $oClient->copy($aArgs['FromPath'].'/'.$aFile['Name'], $aArgs['ToPath'].'/'.$aFile['Name']);
+                        $oClient->copy($aArgs['FromPath'] . '/' . $aFile['Name'], $aArgs['ToPath'] . '/' . $aFile['Name']);
                     }
                     $mResult = true;
                 }
@@ -512,7 +512,7 @@ class Module extends \Aurora\System\Module\AbstractModule
         $mResult = false;
         $oClient = $this->GetClient();
         if ($oClient) {
-            $mResult = $oClient->getMetadata($sPath.'/'.$sName);
+            $mResult = $oClient->getMetadata($sPath . '/' . $sName);
         }
 
         return $mResult;
