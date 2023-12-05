@@ -80,9 +80,9 @@ class Module extends \Aurora\System\Module\AbstractModule
         $this->subscribeEvent('Dropbox::GetSettings', array($this, 'onGetSettings'));
         $this->subscribeEvent('Dropbox::UpdateSettings::after', array($this, 'onAfterUpdateSettings'));
 
-        $this->subscribeEvent('Files::GetItems::before', array($this, 'CheckUrlFile'));
-        $this->subscribeEvent('Files::UploadFile::before', array($this, 'CheckUrlFile'));
-        $this->subscribeEvent('Files::CreateFolder::before', array($this, 'CheckUrlFile'));
+        $this->subscribeEvent('Files::GetItems::before', array($this, 'onCheckUrlFile'));
+        $this->subscribeEvent('Files::UploadFile::before', array($this, 'onCheckUrlFile'));
+        $this->subscribeEvent('Files::CreateFolder::before', array($this, 'onCheckUrlFile'));
         $this->subscribeEvent('Files::CheckQuota::after', array($this, 'onAfterCheckQuota'));
     }
 
@@ -129,22 +129,7 @@ class Module extends \Aurora\System\Module\AbstractModule
      */
     public function onAfterGetStorages($aArgs, &$mResult)
     {
-        \Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
-
-        $bEnableDropboxModule = false;
-        $oDropboxModule = \Aurora\Modules\Dropbox\Module::getInstance();
-        if ($oDropboxModule) {
-            $bEnableDropboxModule = $oDropboxModule->oModuleSettings->EnableModule;
-        }
-
-        $oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
-        $oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
-
-        if ($oOAuthAccount instanceof \Aurora\Modules\OAuthIntegratorWebclient\Models\OauthAccount
-                && $bEnableDropboxModule
-                && $oOAuthAccount->Type === self::$sStorageType
-                && $this->issetScope('storage') && $oOAuthAccount->issetScope('storage')
-        ) {
+        if ($this->CheckDropboxAccess()) {
             $mResult[] = [
                 'Type' => self::$sStorageType,
                 'IsExternal' => true,
@@ -554,7 +539,7 @@ class Module extends \Aurora\System\Module\AbstractModule
             if (false !== strpos($oItem->LinkUrl, 'dl.dropboxusercontent.com') ||
                     false !== strpos($oItem->LinkUrl, 'dropbox.com')) {
                 $aMetadata = $this->getMetadataLink($oItem->LinkUrl);
-                if (isset($aMetadata['path']) && $aMetadata['is_dir']) {
+                if (isset($aMetadata['path_lower']) && $aMetadata['.tag'] == 'folder') {
                     $oItem->UnshiftAction(array(
                         'list' => array()
                     ));
@@ -572,9 +557,12 @@ class Module extends \Aurora\System\Module\AbstractModule
 
     protected function getMetadataLink($sLink)
     {
+        if (!$this->CheckDropboxAccess()) {
+            return null;
+        }
         $oClient = $this->getClient();
         $response = $oClient->postToAPI(
-            '/2/sharing/get_shared_link_metadata',
+            '/sharing/get_shared_link_metadata',
             array(
                 'url' => $sLink
             )
@@ -594,15 +582,17 @@ class Module extends \Aurora\System\Module\AbstractModule
         return $metadata;
     }
 
-    public function CheckUrlFile(&$aArgs, &$mResult)
+    public function onCheckUrlFile(&$aArgs, &$mResult)
     {
-        if (strpos($aArgs['Path'], '.url') !== false) {
+        if ($this->CheckDropboxAccess() && (\pathinfo($aArgs['Path'], PATHINFO_EXTENSION) === 'url' || strpos($aArgs['Path'], '.url/'))) {
             list($sUrl, $sPath) = explode('.url', $aArgs['Path']);
             $sUrl .= '.url';
             $aArgs['Path'] = $sUrl;
             $this->prepareArgs($aArgs);
-            if ($sPath) {
+            if ($sPath && $aArgs['Type'] === self::$sStorageType) {
                 $aArgs['Path'] .= $sPath;
+            } elseif ($aArgs['Type'] !== self::$sStorageType) {
+                $aArgs['Path'] = $sUrl . $sPath;
             }
         }
     }
@@ -617,6 +607,7 @@ class Module extends \Aurora\System\Module\AbstractModule
                 'Type' => $aData['Type'],
                 'Path' => $aPathInfo['dirname'],
                 'Name' => $aPathInfo['basename'],
+                'Id' => $aPathInfo['basename'],
                 'IsThumb' => false
             );
             $mResult = false;
@@ -633,8 +624,8 @@ class Module extends \Aurora\System\Module\AbstractModule
                         false !== strpos($aUrlFileInfo['URL'], 'dropbox.com')) {
                         $aData['Type'] = 'dropbox';
                         $aMetadata = $this->getMetadataLink($aUrlFileInfo['URL']);
-                        if (isset($aMetadata['path'])) {
-                            $aData['Path'] = $aMetadata['path'];
+                        if (isset($aMetadata['path_lower'])) {
+                            $aData['Path'] = $aMetadata['path_lower'];
                         }
                     }
                 }
@@ -715,5 +706,25 @@ class Module extends \Aurora\System\Module\AbstractModule
             $mResult = true;
             return true;
         }
+    }
+
+    protected function CheckDropboxAccess()
+    {
+        \Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
+        $bEnableDropboxModule = false;
+
+        if (class_exists('Aurora\Modules\Dropbox\Module')) {
+            $oDropboxModule = \Aurora\Modules\Dropbox\Module::getInstance();
+            $bEnableDropboxModule = $oDropboxModule->oModuleSettings->EnableModule;
+        }
+
+        $oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
+        $oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
+
+        return ($oOAuthAccount instanceof \Aurora\Modules\OAuthIntegratorWebclient\Models\OauthAccount
+            && $oOAuthAccount->Type === self::$sStorageType
+            && $bEnableDropboxModule
+            && $this->issetScope('storage')
+            && $oOAuthAccount->issetScope('storage'));
     }
 }
