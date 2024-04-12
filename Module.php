@@ -107,11 +107,38 @@ class Module extends \Aurora\System\Module\AbstractModule
 
             $oOAuthIntegratorWebclientModule = \Aurora\Modules\OAuthIntegratorWebclient\Module::Decorator();
             $oOAuthAccount = $oOAuthIntegratorWebclientModule->GetAccount(self::$sStorageType);
-            if ($oOAuthAccount) {
+
+            $oTokenData = \json_decode($oOAuthAccount->AccessToken);
+            if ($oTokenData && $oOAuthAccount) {
+                $accessToken = $oTokenData->access_token;
+                $iCreated = (int) $oTokenData->created;
+                $iExpiresIn = (int) $oTokenData->expires_in;
+                $now = new \DateTime();
+                $now->setTimezone(new \DateTimeZone('GMT'));
+
+                if ($now->getTimestamp() > ($iCreated + $iExpiresIn) && isset($oOAuthAccount->RefreshToken)) {
+                    $oConnector = new \Aurora\Modules\DropboxAuthWebclient\Classes\Connector($this);
+                    $aResult = $oConnector->RefreshAccessToken(
+                        $oDropboxModule->oModuleSettings->Id,
+                        $oDropboxModule->oModuleSettings->Secret,
+                        $oOAuthAccount->RefreshToken
+                    );
+                    if (isset($aResult['access_token'])) {
+                        $oTokenData->access_token = $aResult['access_token'];
+                        $oTokenData->created = $now->getTimestamp();
+                        $oTokenData->expires_in = $aResult['expires_in'];
+
+                        $oOAuthAccount->AccessToken = \json_encode($oTokenData);
+                        $oOAuthAccount->save();
+
+                        $accessToken = $oTokenData->access_token;
+                    }
+                }
+
                 $oDropboxApp = new \Kunnu\Dropbox\DropboxApp(
                     $oDropboxModule->oModuleSettings->Id,
                     $oDropboxModule->oModuleSettings->Secret,
-                    $oOAuthAccount->AccessToken
+                    $accessToken
                 );
                 $this->oClient = new \Kunnu\Dropbox\Dropbox($oDropboxApp);
             }
